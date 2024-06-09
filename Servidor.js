@@ -65,10 +65,16 @@ function Criptografar(MENSAGEM) {
 }
 
 const pool = mysql.createPool({
-    host: '127.0.0.1',
+    host: 'mysql-mn8h.railway.internal',
+    //host: 'monorail.proxy.rlwy.net',
     user: 'root',
-    password: '',
-    database: 'aluno',
+    password: 'zOSDfyNbJkAwWKtPQWkBaqXtvcIawmiJ',
+    database: 'railway',
+    port: 3306,
+    //port: 16800,
+    waitForConnections: true,
+    connectionLimit: 50,
+    queueLimit: 0
 });
 
 
@@ -83,10 +89,13 @@ class Database {
     constructor() {
         if (!Database.instance) {
             this.pool = mysql.createPool({
-                host: '127.0.0.1',
+                host: 'mysql-mn8h.railway.internal',
+                //host: 'monorail.proxy.rlwy.net',
                 user: 'root',
-                password: '',
-                database: 'aluno',
+                password: 'zOSDfyNbJkAwWKtPQWkBaqXtvcIawmiJ',
+                database: 'railway',
+                port: 3306,
+                //port: 16800,
                 waitForConnections: true,
                 connectionLimit: 50,
                 queueLimit: 0
