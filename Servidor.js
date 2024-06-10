@@ -32,7 +32,7 @@ function getData() {
     today = new Date()
     return ((today.getFullYear()) + "-" + (monName[today.getMonth()]) + "-" + (today.getDate() < 10 ? '0' + today.getDate() : today.getDate()))
 }
-
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(bodyParserErrorHandler());
@@ -362,13 +362,13 @@ process.on('SIGINT', () => {
 // Evento para encerrar a conexão e desconectar o socket quando ocorre um erro não tratado
 process.on('uncaughtException', (err) => {
     console.error('Erro não tratado:', err);
-    process.exit(1);
+
 });
 
 
 
-Servidor.listen(3001, () => {
-    console.log("Servidor com a Porta 3001 em Execução")
+Servidor.listen(PORT, () => {
+    console.log(`Servidor com a Porta ${PORT} em Execução`)
 });
 /*
 setInterval(async function () { // Saida Matutino
