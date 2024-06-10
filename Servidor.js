@@ -134,7 +134,7 @@ class NovaEscola {
         if (Descriptografar(this.data.Code) !== '9856325646516') return
 
         try {
-            const QueryLogin = 'SELECT * FROM User where Login=? AND Senha=?;';
+            const QueryLogin = 'SELECT * FROM user where Login=? AND Senha=?;';
             const LoginValor = [Descriptografar(this.data.Login), Descriptografar(this.data.Senha)];
             const ExecutarLogin = await this.db.query(QueryLogin, LoginValor);
 
