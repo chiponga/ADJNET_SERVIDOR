@@ -514,6 +514,39 @@ class NovaEscola {
 
     }
 
+    async handlerReceberNotas(){
+
+        const Code = JSON.parse(Descriptografar(this.data.Code))
+        const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
+
+        if(Code !== '35442635442365442346') return
+
+        try{
+
+            const QueryRegistro = 'SELECT * FROM notas WHERE Codigo=?';
+            const ValorRegistro = [Codigo];
+            const ResultadoRegistro = await this.db.query(QueryRegistro, ValorRegistro);
+
+            if(ResultadoRegistro.length > 0){
+            this.socket.emit('ResponseReceberNotas', {
+                Code: Criptografar(JSON.stringify('655644331453261456654')),
+                result: Criptografar(JSON.stringify(ResultadoRegistro))
+            })
+            }else{
+                this.socket.emit('ResponseReceberNotas', {
+                    Code: Criptografar(JSON.stringify('655644331453261456654')),
+                    result: Criptografar(JSON.stringify(0))
+                })
+            }
+
+
+        }catch(error){
+            console.error(error)
+        }
+
+
+    }
+
 }
 
 
@@ -544,6 +577,8 @@ socket.on('connection', (Socket) => {
     Socket.on('RegistrosRegistro', (data) => new NovaEscola(data, Socket).handlerRegistrosRegistro());
 
     Socket.on('RegistrarAluno', (data) => new NovaEscola(data, Socket).handlerRegistroAluno())
+
+    Socket.on('ReceberNotas', (data) => new NovaEscola(data, Socket).handlerReceberNotas())
 
     Socket.on('disconnect', async () => {
 
