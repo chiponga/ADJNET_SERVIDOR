@@ -480,6 +480,40 @@ class NovaEscola {
         }
     }
 
+    async handlerRegistroAluno(){
+
+        const Code = JSON.parse(Descriptografar(this.data.Code))
+        const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
+        const Senha = JSON.parse(Descriptografar(this.data.Senha))
+
+        if(Code !== '3554365456765618372913') return
+
+        try{
+
+            const QueryRegistro = 'SELECT * FROM cadastro WHERE Codigo=? and Senha=?';
+            const ValorRegistro = [Codigo, Senha];
+            const ResultadoRegistro = await this.db.query(QueryRegistro, ValorRegistro);
+
+            if(ResultadoRegistro.length > 0){
+            this.socket.emit('ResponseRegistrarAluno', {
+                Code: Criptografar(JSON.stringify('655644331453261456654')),
+                result: Criptografar(JSON.stringify(ResultadoRegistro))
+            })
+            }else{
+                this.socket.emit('ResponseRegistrarAluno', {
+                    Code: Criptografar(JSON.stringify('655644331453261456654')),
+                    result: Criptografar(JSON.stringify(0))
+                })
+            }
+
+
+        }catch(error){
+            console.error(error)
+        }
+
+
+    }
+
 }
 
 
@@ -508,6 +542,8 @@ socket.on('connection', (Socket) => {
     Socket.on('RegistrosAvisos', (data) => new NovaEscola(data, Socket).handlerRegistrosAvisos());
 
     Socket.on('RegistrosRegistro', (data) => new NovaEscola(data, Socket).handlerRegistrosRegistro());
+
+    Socket.on('RegistrarAluno', (data) => new NovaEscola(data, Socket).handlerRegistroAluno())
 
     Socket.on('disconnect', async () => {
 
