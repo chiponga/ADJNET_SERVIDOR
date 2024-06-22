@@ -77,14 +77,6 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-
-var conexoes = []
-
-const Cliente_Site = {
-    Cliente: {}
-}
-
-
 class Database {
     constructor() {
         if (!Database.instance) {
@@ -100,26 +92,59 @@ class Database {
                 connectionLimit: 50,
                 queueLimit: 0
             });
+
+            this.keepAliveInterval = 60000; // Intervalo de 60 segundos para o keep-alive
+            this.startKeepAlive();
+
             Database.instance = this;
         }
         return Database.instance;
     }
 
     async query(sql, values = []) {
-        const connection = await this.pool.getConnection();
+        let connection;
         try {
+            connection = await this.pool.getConnection();
             const [rows, fields] = await connection.query(sql, values);
             return rows;
         } catch (error) {
             console.error('Erro na consulta:', error);
+            if (error.code === 'ECONNRESET' || error.code === 'PROTOCOL_CONNECTION_LOST') {
+                // Tentativa de reconectar se a conexão foi perdida
+                connection = await this.pool.getConnection();
+                const [rows, fields] = await connection.query(sql, values);
+                return rows;
+            }
             throw error;
         } finally {
-            connection.release();
+            if (connection) {
+                connection.release();
+            }
         }
     }
 
-
+    startKeepAlive() {
+        setInterval(async () => {
+            try {
+                const connection = await this.pool.getConnection();
+                await connection.ping();
+                connection.release();
+            } catch (err) {
+                console.error('Keep-alive error:', err);
+            }
+        }, this.keepAliveInterval);
+    }
 }
+
+
+var conexoes = []
+
+const Cliente_Site = {
+    Cliente: {}
+}
+
+
+
 
 
 class NovaEscola {
@@ -295,6 +320,166 @@ class NovaEscola {
             console.error('Erro ao obter o número de conexões:', error);
         }
     }
+
+    async handlerRegistroToken() {
+
+        const Code = JSON.parse(Descriptografar(this.data.Code))
+        const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
+        const Token = JSON.parse(Descriptografar(this.data.Token))
+
+        if (Code !== '5475656746565821653791789321789') return
+
+        try {
+            const query = 'SELECT * FROM token where Codigo=? AND Token=?;'
+            const valores = [Codigo, Token]
+            const resultados = await this.db.query(query, valores)
+
+            if (resultados.length > 0) {
+
+                if (this.data.Token !== undefined && this.data.Token !== '') {
+
+                    const query = 'INSERT INTO token (Codigo, Token) VALUES(?,?)'
+                    const valores = [Codigo, Token]
+                    await this.db.query(query, valores);
+
+                    this.socket.emit('ResponseCriarToken', {
+                        Code: Criptografar(JSON.stringify('44655441676554876889787')),
+                        Response: Criptografar(JSON.stringify(true))
+                    })
+                }
+            }
+        } catch (erro) {
+            console.log(erro)
+        }
+    }
+
+    async handlerUltimaEntrada() {
+
+        const Code = JSON.parse(Descriptografar(this.data.Code))
+        const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
+        const Escola = JSON.parse(Descriptografar(this.data.Escola))
+
+
+        if (Code !== '489498498498') return
+
+        try {
+            const querySaida = 'SELECT Horas FROM entrada where Codigo=? AND Dia=? AND Escola=?;';
+            const ValorSaida = [Codigo, getData(), Escola];
+            const Resultado = await this.db.query(querySaida, ValorSaida);
+
+            if (Resultado.length > 0) {
+                this.socket.emit(`ResponseUltimaEntrada`, {
+                    Code: Criptografar('489498498498'),
+                    Dados: Criptografar(Resultado[Resultado.length - 1].Horas)
+                })
+            } else {
+                this.socket.emit(`ResponseUltimaEntrada`, {
+                    Code: Criptografar('489498498498'),
+                    Dados: Criptografar('-- : -- : --')
+                })
+            }
+        } catch (error) {
+            console.error('Erro ao consultar dados:', error);
+        }
+    }
+
+    async handlerUltimaSaida() {
+
+        const Code = JSON.parse(Descriptografar(this.data.Code))
+        const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
+        const Escola = JSON.parse(Descriptografar(this.data.Escola))
+
+        if (Code !== '98749651321321321') return
+
+        try {
+            const querySaida = 'SELECT Horas FROM saida where Codigo=? AND Dia=? AND Escola=?;';
+            const ValorSaida = [Codigo, getData(), Escola];
+            const Resultado = await this.db.query(querySaida, ValorSaida);
+
+            if (Resultado.length > 0) {
+                this.socket.emit(`ResponseUltimaSaida`, {
+                    Code: Criptografar('98749651321321321'),
+                    Dados: Criptografar(Resultado[Resultado.length - 1].Horas)
+                })
+            } else {
+                this.socket.emit(`ResponseUltimaSaida`, {
+                    Code: Criptografar('98749651321321321'),
+                    Dados: Criptografar('-- : -- : --')
+                })
+            }
+        } catch (error) {
+            console.error('Erro ao consultar dados:', error);
+        }
+    }
+
+    async handlerRegistrosAvisos() {
+
+
+        const Code = JSON.parse(Descriptografar(this.data.Code))
+        const Escola = JSON.parse(Descriptografar(this.data.Escola))
+
+        if (Code === '2434646554568775') {
+
+            try {
+
+                const QueryAvisos = 'SELECT * FROM avisos WHERE Escola=?;';
+                const ValorAvisos = [Escola];
+                const ResultadoAvisos = await this.db.query(QueryAvisos, ValorAvisos);
+
+                if (ResultadoAvisos.length > 0) {
+                    this.socket.emit(`ResponseAvisos`, {
+                        Code: Criptografar('989789567756897'),
+                        Data: Criptografar(ResultadoAvisos)
+                    })
+                } else {
+                    this.socket.emit(`ResponseAvisos`, {
+                        Code: Criptografar('989789567756897'),
+                        Data: Criptografar([])
+                    })
+                }
+
+            } catch (error) {
+                console.error('Erro ao consultar dados:', error);
+            }
+        }
+    }
+
+    async handlerRegistrosRegistro() {
+
+        const Code = JSON.parse(Descriptografar(this.data.Code))
+        const Escola = JSON.parse(Descriptografar(this.data.Escola))
+        const Turma = JSON.parse(Descriptografar(this.data.Turma))
+        const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
+
+
+        if (Code === '23544236544235464') {
+
+
+            try {
+
+                const QueryRegistro = 'select * from registro where Escola=? and Turma=? or Escola=? and Codigo=?';
+                const ValorRegistro = [Escola, Turma, Escola, Codigo];
+                const ResultadoRegistro = await this.db.query(QueryRegistro, ValorRegistro);
+
+                if (ResultadoRegistro.length > 0) {
+                    this.socket.emit(`ResponseRegistros`, {
+                        Code: Criptografar('9854854651651'),
+                        Data: Criptografar(ResultadoRegistro)
+                    })
+                } else {
+                    this.socket.emit(`ResponseRegistros`, {
+                        Code: Criptografar('9854854651651'),
+                        Data: Criptografar([])
+                    })
+                }
+
+            } catch (error) {
+                console.error('Erro ao consultar dados:', error);
+
+            }
+        }
+    }
+
 }
 
 
@@ -314,15 +499,15 @@ socket.on('connection', (Socket) => {
 
     // aplicativo
 
-    Socket.on('UltimaEntrada', (data) => handlerUltimaEntrada(data, Socket));
+    Socket.on('UltimaEntrada', (data) => new NovaEscola(data, Socket).handlerUltimaEntrada());
 
-    Socket.on('UltimaSaida', (data) => handlerUltimaSaida(data, Socket));
+    Socket.on('UltimaSaida', (data) => new NovaEscola(data, Socket).handlerUltimaSaida());
 
-    Socket.on('RegistroToken', (data) => handlerRegistroToken(data));
+    Socket.on('RegistroToken', (data) => new NovaEscola(data, Socket).handlerRegistroToken());
 
-    Socket.on('RegistrosAvisos', (data) => handlerRegistrosAvisos(data, Socket));
+    Socket.on('RegistrosAvisos', (data) => new NovaEscola(data, Socket).handlerRegistrosAvisos());
 
-    Socket.on('RegistrosRegistro', (data) => handlerRegistrosRegistro(data, Socket));
+    Socket.on('RegistrosRegistro', (data) => new NovaEscola(data, Socket).handlerRegistrosRegistro());
 
     Socket.on('disconnect', async () => {
 
@@ -616,174 +801,7 @@ setInterval(async function () {
 
 // APLICATIVO
 
-async function handlerRegistrosAvisos(data, Socket) {
 
-    if (Descriptografar(data.Code) === '2434646554568775') {
-
-        try {
-
-            const connection = await pool.getConnection();
-            const QueryAvisos = 'SELECT * FROM avisos WHERE Escola=?;';
-            const ValorAvisos = [Descriptografar(data.Escola)];
-            const [ResultadoAvisos] = await connection.query(QueryAvisos, ValorAvisos);
-
-            if (ResultadoAvisos.length > 0) {
-                Socket.emit(`ResponseAvisos${Descriptografar(data.Codigo)}`, {
-                    Code: Criptografar('989789567756897'),
-                    Data: Criptografar(ResultadoAvisos)
-                })
-            } else {
-                Socket.emit(`ResponseAvisos${Descriptografar(data.Codigo)}`, {
-                    Code: Criptografar('989789567756897'),
-                    Data: Criptografar([])
-                })
-            }
-
-            connection.release();
-        } catch (error) {
-            console.error('Erro ao consultar dados:', error);
-        }
-    }
-}
-
-async function handlerRegistrosRegistro(data, Socket) {
-
-
-    if (Descriptografar(data.Code) === '23544236544235464') {
-
-
-        try {
-
-            const connection = await pool.getConnection();
-            const QueryRegistro = 'select * from registro where Escola=? and Turma=? or Escola=? and Codigo=?';
-            const ValorRegistro = [Descriptografar(data.Escola), Descriptografar(data.Turma), Descriptografar(data.Escola), Descriptografar(data.Codigo)];
-            const [ResultadoRegistro] = await connection.query(QueryRegistro, ValorRegistro);
-
-            if (ResultadoRegistro.length > 0) {
-                Socket.emit(`ResponseRegistros${Descriptografar(data.Codigo)}`, {
-                    Code: Criptografar('9854854651651'),
-                    Data: Criptografar(ResultadoRegistro)
-                })
-            } else {
-                Socket.emit(`ResponseRegistros${Descriptografar(data.Codigo)}`, {
-                    Code: Criptografar('9854854651651'),
-                    Data: Criptografar([])
-                })
-            }
-
-            connection.release();
-
-        } catch (error) {
-            console.error('Erro ao consultar dados:', error);
-
-        }
-    }
-}
-
-async function handlerRegistroToken(data) {
-
-    if (data.Code === '52261265165165') {
-
-        pool.getConnection((erro, connection) => {
-            if (erro) {
-                console.log(`Erro encontrado: ${erro}`)
-                connection.release();
-                return
-            }
-            try {
-                const query = 'SELECT * FROM token where Codigo=? AND Token=?;'
-                connection.query(query, [Codigo = data.Codigo, Token = data.Token], (error, results) => {
-                    if (error) {
-                        console.error('Erro ao consultar dados:', error);
-                        connection.release();
-                        return;
-                    }
-
-                    if (results.length === 0) {
-
-                        if (data.Token !== undefined && data.Token !== '') {
-
-                            connection.query('INSERT INTO token (Codigo, Token) VALUE("' + data.Codigo + '", "' + data.Token + '")', (error2, results2) => {
-                                if (error2) {
-                                    console.error('Erro ao consultar dados:', error2);
-                                    connection.release();
-                                    return;
-                                }
-
-                            })
-                            connection.release();
-                        }
-                    } else {
-                        connection.release();
-                    }
-
-                })
-            } catch (erro) {
-                console.log(erro)
-                connection.release();
-            }
-        })
-
-    }
-
-}
-
-async function handlerUltimaEntrada(data, Socket) {
-
-    if (Descriptografar(data.Code) !== '489498498498') return
-
-    try {
-        const connection = await pool.getConnection()
-        const querySaida = 'SELECT Horas FROM entrada where Codigo=? AND Dia=?;';
-        const ValorSaida = [Descriptografar(data.Codigo), getData()];
-        const [Resultado] = await connection.query(querySaida, ValorSaida);
-
-        if (Resultado.length > 0) {
-            Socket.emit(`ResponseUltimaEntrada${Descriptografar(data.Codigo)}`, {
-                Code: Criptografar('489498498498'),
-                Dados: Criptografar(Resultado[Resultado.length - 1].Horas)
-            })
-        } else {
-            Socket.emit(`ResponseUltimaEntrada${Descriptografar(data.Codigo)}`, {
-                Code: Criptografar('489498498498'),
-                Dados: Criptografar('-- : -- : --')
-            })
-        }
-        connection.release()
-    } catch (error) {
-        console.error('Erro ao consultar dados:', error);
-    }
-}
-
-async function handlerUltimaSaida(data, Socket) {
-
-
-    if (Descriptografar(data.Code) !== '98749651321321321') {
-        return
-    }
-
-    try {
-        const connection = await pool.getConnection()
-        const querySaida = 'SELECT * FROM saida where Codigo=? AND Dia=?;';
-        const ValorSaida = [Descriptografar(data.Codigo), getData()];
-        const [Resultado] = await connection.query(querySaida, ValorSaida);
-
-        if (Resultado.length > 0) {
-            Socket.emit(`ResponseUltimaSaida${Descriptografar(data.Codigo)}`, {
-                Code: Criptografar('98749651321321321'),
-                Dados: Criptografar(Resultado[Resultado.length - 1].Horas)
-            })
-        } else {
-            Socket.emit(`ResponseUltimaSaida${Descriptografar(data.Codigo)}`, {
-                Code: Criptografar('98749651321321321'),
-                Dados: Criptografar('-- : -- : --')
-            })
-        }
-        connection.release()
-    } catch (error) {
-        console.error('Erro ao consultar dados:', error);
-    }
-}
 
 
 // SITE
@@ -950,98 +968,4 @@ async function EnviarNotificaSaida(expoPushToken, aluno, Horas) {
 
 
 
-setInterval(async () => { // Saida Matutino
 
-    CriarImagem()
-    //restartServer()
-
-}, 1000)
-
-
-async function CriarImagem() {
-
-    var today = new Date()
-    const dayName = new Array("domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado")
-
-    var HoraAtual = (((today.getHours() + 4) < 10 ? ("0" + (today.getHours() + 4)) : (today.getHours() + 4)) + ":" + (today.getMinutes() < 10 ? ("0" + today.getMinutes()) : today.getMinutes()) + ":" + (today.getSeconds() < 10 ? ("0" + today.getSeconds()) : today.getSeconds()));
-
-    if (dayName[today.getDay()] !== "sábado" && dayName[today.getDay()] !== "domingo") {
-
-        if (HoraAtual !== '22:00:00') return
-
-        const connection = new Database();
-        const TotalQuery = 'SELECT * FROM cadastro'
-        const resultado = await connection.query(TotalQuery)
-
-
-        for (let i = 0; i < resultado.length; i++) {
-
-            const imagePath = path.join(__dirname, `/Fotos/${resultado[i].Codigo}.JPG`);
-
-            fs.readFile(imagePath, (error, data) => {
-                if (error) {
-
-                    console.log(`Erro ao ler a imagem: ${resultado[i].Codigo}`);
-
-                } else {
-
-                    const base64Image = Buffer.from(data).toString('base64');
-
-                    const buffer = Buffer.from(base64Image, 'base64');
-
-                    // Comprime a imagem usando sharp
-                    sharp(buffer)
-                        .resize(200) // Redimensiona a imagem para uma largura máxima de 800 pixels (opcional)
-                        .toBuffer()
-                        .then(async (buffer) => {
-                            // Converte o buffer para base64
-                            const compressedBase64Image = buffer.toString('base64');
-
-                            // Faça algo com a imagem comprimida em base64, como salvá-la no banco de dados ou enviá-la para outro lugar
-                            console.log(`Imagem ${resultado[i].Codigo} Criada com sucesso`);
-
-
-                            const valor = [compressedBase64Image, resultado[i].Codigo]
-                            const query = 'UPDATE cadastro SET Imagem=? WHERE Codigo=?'
-                            await connection.query(query, valor)
-                        })
-                }
-            });
-        }
-
-        console.log('Finalizado')
-        
-    }
-}
-
-// Função para reiniciar o servidor
-function restartServer() {
-
-    var today = new Date()
-    const dayName = new Array("domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado")
-
-    var HoraAtual = (((today.getHours() + 4) < 10 ? ("0" + (today.getHours() + 4)) : (today.getHours() + 4)) + ":" + (today.getMinutes() < 10 ? ("0" + today.getMinutes()) : today.getMinutes()) + ":" + (today.getSeconds() < 10 ? ("0" + today.getSeconds()) : today.getSeconds()));
-    var DataAtual = (today.getFullYear() + "-" + monName[today.getMonth()] + "-" + today.getDate());
-
-    if (dayName[today.getDay()] !== "sábado" && dayName[today.getDay()] !== "domingo") {
-
-        if (HoraAtual === '06:00:00' || HoraAtual === '12:00:00' || HoraAtual === '21:00:00') {
-            console.log('--------------------------------------------');
-            console.log('');
-            console.log('Reiniciando Servidor...');
-            console.log('');
-            console.log('--------------------------------------------');
-            setTimeout(() => {
-                Servidor.listen(3001, () => {
-                    console.log('--------------------------------------------');
-                    console.log('');
-                    console.log("Servidor com a Porta 3001 em Execução")
-                    console.log('');
-                    console.log('--------------------------------------------');
-                });
-            }, 5000);
-            Servidor.close();
-        }
-
-    }
-}
