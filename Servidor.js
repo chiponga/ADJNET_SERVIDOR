@@ -550,25 +550,25 @@ class NovaEscola {
         var Salvar = []
         var contador = 0;
         const Identification = Descriptografar(this.data.Identification)
-    
+
         socket.emit(`CriarDados${Identification}`, {
             Code: Criptografar('9956546546521'),
             Status: Criptografar('202')
-    
+
         })
-    
+
         const teste = Descriptografar(this.data.Alunos)
-      
+
         const QueryAlunos = 'SELECT * FROM cadastro where Escola=?;';
         const ValorAlunos = [Descriptografar(this.data.Escola)];
         const ResultadoAlunos = await this.db.query(QueryAlunos, ValorAlunos);
-    
+
         if (ResultadoAlunos.length > 0) {
-    
-           const lista =  ResultadoAlunos.map((item) => {
-    
+
+            const lista = ResultadoAlunos.map((item) => {
+
                 if (item.Senha != 'e73d9330d802247ffdbf57bbf707b746d4c1c8c4') {
-    
+
                     Salvar.push({
                         Codigo: item.Codigo,
                         Senha: item.Senha,
@@ -589,12 +589,12 @@ class NovaEscola {
                     })
                 }
             })
-    
+
         }
-    
-    
+
+
         try {
-    
+
             const QueryDelete = "DELETE FROM cadastro WHERE Escola=?;"
             const ValorDelete = [Descriptografar(this.data.Escola)];
             await this.db.query(QueryDelete, ValorDelete);
@@ -602,60 +602,70 @@ class NovaEscola {
         } catch (Error) {
             console.error(`Erro Encontrado no bloco 01 handlerRegistroEscola: ${Error} `)
         }
-    
+
         try {
             const QueryAlunos = 'SELECT * FROM cadastro where Escola=?;';
             const ValorAlunos = [Descriptografar(this.data.Escola)];
             const ResultadoAlunos = await this.db.query(QueryAlunos, ValorAlunos);
-    
+
             if (ResultadoAlunos.length > 0) return
-    
+
             const QueryAlunosV = 'SELECT Codigo FROM cadastro';
             const ResultadoAlunosV = await this.db.query(QueryAlunosV);
-    
-    
-            for (let i = 0; i < teste.length; i++) {
-    
-                if (ResultadoAlunosV.find((e) => e.Codigo === teste[i].Codigo) !== undefined) {
-    
+            console.log(Salvar.length)
+            console.log(teste.length)
+
+
+            for (planilha in teste) {
+
+                if (ResultadoAlunosV.find((e) => e.Codigo === planilha.Codigo) !== undefined) {
+
                     console.log(`Aluno Duplicado encontrado, mudança feita`)
-    
+
                     const QueryDelete = "DELETE FROM cadastro WHERE Codigo=?;"
-                    const ValorDelete = [teste[i].Codigo];
+                    const ValorDelete = [planilha.Codigo];
                     await this.db.query(QueryDelete, ValorDelete);
-    
+
                 } else {
-    
+
                     Salvar.map(async (item) => {
                         if (teste.find((e) => e.Codigo === item.Codigo) !== undefined) {
-    
+
                             contador += 1
-    
+
                             socket.emit(`Contador${Identification}`, {
                                 Code: Criptografar('65435436554'),
                                 contador: Criptografar(contador)
                             })
-    
-    
-                            console.log(`Aluno ${teste[i].Aluno} inserido com Sucesso totalizando ${contador}`)
-                            const QueryInsert = "INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha, Imagem) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
-                            const ValorInsert = [teste[i].Codigo, item.Senha, teste[i].Autorization, teste[i].Aluno, teste[i].Escola, teste[i].Modalidade, teste[i].Data, teste[i].Turma, teste[i].AnoSerie, teste[i].Turno, teste[i].Sexo, teste[i].Ano, teste[i].Atrasos, teste[i].Entradas, item.Carteirinha, item.Imagem]
-                            await this.db.query(QueryInsert, ValorInsert);
-    
+
+
+
+                            try {
+                                const QueryInsert = "INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha, Imagem) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
+                                const ValorInsert = [planilha.Codigo, item.Senha, planilha.Autorization, planilha.Aluno, planilha.Escola, planilha.Modalidade, planilha.Data, planilha.Turma, planilha.AnoSerie, planilha.Turno, planilha.Sexo, planilha.Ano, planilha.Atrasos, planilha.Entradas, item.Carteirinha, item.Imagem]
+                                await this.db.query(QueryInsert, ValorInsert);
+                                console.log(`Aluno ${planilha.Aluno} inserido com Sucesso totalizando ${contador}`)
+                            } catch (error) {
+                                console.log(error)
+                            }
+
                         } else {
                             contador += 1
-    
+
                             socket.emit(`Contador${Identification}`, {
                                 Code: Criptografar('65435436554'),
                                 contador: Criptografar(contador)
                             })
-    
-    
-    
-                            console.log(`Aluno ${teste[i].Aluno} inserido com Sucesso totalizando ${contador}`)
-                            const QueryInsert = "INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
-                            const ValorInsert = [teste[i].Codigo, teste[i].Senha, teste[i].Autorization, teste[i].Aluno, teste[i].Escola, teste[i].Modalidade, teste[i].Data, teste[i].Turma, teste[i].AnoSerie, teste[i].Turno, teste[i].Sexo, teste[i].Ano, teste[i].Atrasos, teste[i].Entradas, '2025-03-30']
-                            await this.db.query(QueryInsert, ValorInsert);
+
+
+                            try {
+                                const QueryInsert = "INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
+                                const ValorInsert = [planilha.Codigo, planilha.Senha, planilha.Autorization, planilha.Aluno, planilha.Escola, planilha.Modalidade, planilha.Data, planilha.Turma, planilha.AnoSerie, planilha.Turno, planilha.Sexo, planilha.Ano, planilha.Atrasos, planilha.Entradas, '2025-03-30']
+                                await this.db.query(QueryInsert, ValorInsert);
+                                console.log(`Aluno ${planilha.Aluno} inserido com Sucesso totalizando ${contador}`)
+                            } catch (error) {
+                                console.log(error)
+                            }
                         }
                     })
                 }
@@ -664,11 +674,11 @@ class NovaEscola {
                 Code: Criptografar('984854153165'),
                 Status: Criptografar('201')
             })
-    
+
         } catch (Error) {
             console.error(`Erro Encontrado no bloco 02 handlerRegistroEscola: ${Error} `)
         }
-    
+
     }
 
 }
@@ -684,7 +694,7 @@ socket.on('connection', (Socket) => {
 
     Socket.on('Login', (data) => new NovaEscola(data, Socket).handlerLogin());
 
-    Socket.on('RegistrarEscola', (data) => new NovaEscola(data,Socket).handlerRegistroEscola());
+    Socket.on('RegistrarEscola', (data) => new NovaEscola(data, Socket).handlerRegistroEscola());
 
     Socket.on('Validar', (data) => handlerValidar(data, Socket));
 
