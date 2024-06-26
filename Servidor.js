@@ -616,7 +616,7 @@ class NovaEscola {
             console.log(teste.length)
 
 
-            for (planilha in teste) {
+            teste.map(async (planilha) => {
 
                 if (ResultadoAlunosV.find((e) => e.Codigo === planilha.Codigo) !== undefined) {
 
@@ -669,7 +669,7 @@ class NovaEscola {
                         }
                     })
                 }
-            }
+            })
             socket.emit(`Finalizar${Identification}`, {
                 Code: Criptografar('984854153165'),
                 Status: Criptografar('201')
