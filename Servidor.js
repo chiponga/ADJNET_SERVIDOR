@@ -598,16 +598,14 @@ class NovaEscola {
                 });
     
                 if (existingAluno) {
-                    const QueryInsert = `INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, 'Ano-Serie', Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha, Imagem) 
-                                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    const QueryInsert = `INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, 'Ano-Serie', Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha, Imagem) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
                     const ValorInsert = [
                         planilha.Codigo, existingAluno.Senha, planilha.Autorization, planilha.Aluno, planilha.Escola, planilha.Modalidade, planilha.Data, planilha.Turma,
                         planilha.AnoSerie, planilha.Turno, planilha.Sexo, planilha.Ano, planilha.Atrasos, planilha.Entradas, existingAluno.Carteirinha, existingAluno.Imagem
                     ];
                     await this.db.query(QueryInsert, ValorInsert);
                 } else {
-                    const QueryInsert = `INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, 'Ano-Serie', Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha) 
-                                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    const QueryInsert = `INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, 'Ano-Serie', Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
                     const ValorInsert = [
                         planilha.Codigo, planilha.Senha, planilha.Autorization, planilha.Aluno, planilha.Escola, planilha.Modalidade, planilha.Data, planilha.Turma,
                         planilha.AnoSerie, planilha.Turno, planilha.Sexo, planilha.Ano, planilha.Atrasos, planilha.Entradas, '2025-03-30'
