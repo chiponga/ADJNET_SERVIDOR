@@ -480,26 +480,26 @@ class NovaEscola {
         }
     }
 
-    async handlerRegistroAluno(){
+    async handlerRegistroAluno() {
 
         const Code = JSON.parse(Descriptografar(this.data.Code))
         const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
         const Senha = JSON.parse(Descriptografar(this.data.Senha))
 
-        if(Code !== '3554365456765618372913') return
+        if (Code !== '3554365456765618372913') return
 
-        try{
+        try {
 
             const QueryRegistro = 'SELECT * FROM cadastro WHERE Codigo=? and Senha=?';
             const ValorRegistro = [Codigo, Senha];
             const ResultadoRegistro = await this.db.query(QueryRegistro, ValorRegistro);
 
-            if(ResultadoRegistro.length > 0){
-            this.socket.emit('ResponseRegistrarAluno', {
-                Code: Criptografar(JSON.stringify('655644331453261456654')),
-                result: Criptografar(JSON.stringify(ResultadoRegistro))
-            })
-            }else{
+            if (ResultadoRegistro.length > 0) {
+                this.socket.emit('ResponseRegistrarAluno', {
+                    Code: Criptografar(JSON.stringify('655644331453261456654')),
+                    result: Criptografar(JSON.stringify(ResultadoRegistro))
+                })
+            } else {
                 this.socket.emit('ResponseRegistrarAluno', {
                     Code: Criptografar(JSON.stringify('655644331453261456654')),
                     result: Criptografar(JSON.stringify(0))
@@ -507,44 +507,41 @@ class NovaEscola {
             }
 
 
-        }catch(error){
+        } catch (error) {
             console.error(error)
         }
 
 
     }
 
-    async handlerReceberNotas(){
+    async handlerReceberNotas() {
 
         const Code = JSON.parse(Descriptografar(this.data.Code))
         const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
 
-        if(Code !== '35442635442365442346') return
+        if (Code !== '35442635442365442346') return
 
-        try{
+        try {
 
             const QueryRegistro = 'SELECT * FROM notas WHERE Codigo=?';
             const ValorRegistro = [Codigo];
             const ResultadoRegistro = await this.db.query(QueryRegistro, ValorRegistro);
 
-            if(ResultadoRegistro.length > 0){
-            this.socket.emit('ResponseReceberNotas', {
-                Code: Criptografar(JSON.stringify('655644331453261456654')),
-                result: Criptografar(JSON.stringify(ResultadoRegistro))
-            })
-            }else{
+            if (ResultadoRegistro.length > 0) {
+                this.socket.emit('ResponseReceberNotas', {
+                    Code: Criptografar(JSON.stringify('655644331453261456654')),
+                    result: Criptografar(JSON.stringify(ResultadoRegistro))
+                })
+            } else {
                 this.socket.emit('ResponseReceberNotas', {
                     Code: Criptografar(JSON.stringify('655644331453261456654')),
                     result: Criptografar(JSON.stringify(0))
                 })
             }
 
-
-        }catch(error){
+        } catch (error) {
             console.error(error)
         }
-
-
     }
 
 }
@@ -928,7 +925,7 @@ async function handlerValidar(data, Socket) {
 async function handlerRegistroEscola(data, socket) {
 
     if (Descriptografar(data.Code) !== '968545616547') return
-
+    var Salvar = []
     var contador = 0;
     const Identification = Descriptografar(data.Identification)
 
@@ -940,6 +937,41 @@ async function handlerRegistroEscola(data, socket) {
 
     const teste = Descriptografar(data.Alunos)
     const connection = await pool.getConnection();
+
+    const QueryAlunos = 'SELECT * FROM cadastro where Escola=?;';
+    const ValorAlunos = [Descriptografar(data.Escola)];
+    const [ResultadoAlunos] = await connection.query(QueryAlunos, ValorAlunos);
+
+    if (ResultadoAlunos.length > 0) {
+
+        ResultadoAlunos.map((item) => {
+
+            if (item.Senha != 'e73d9330d802247ffdbf57bbf707b746d4c1c8c4' && item.Carteirinha !== '2024-01-01') {
+
+                Salvar.push({
+                    Codigo: item.Codigo,
+                    Senha: item.Senha,
+                    Autorization: item.Autorization,
+                    Aluno: item.Aluno,
+                    Escola: item.Escola,
+                    Modalidade: item.Modalidade,
+                    Data: item.Data,
+                    Turma: item.Turma,
+                    AnoSerie: item.AnoSerie,
+                    Turno: item.Turno,
+                    Sexo: item.Sexo,
+                    Ano: item.Ano,
+                    Atrasos: item.Atrasos,
+                    Entradas: item.Entradas,
+                    Carteirinha: item.Carteirinha,
+                    Imagem: item.Imagem
+                })
+            }
+        })
+
+    }
+
+
     try {
 
         const QueryDelete = "DELETE FROM cadastro WHERE Escola=?;"
@@ -971,18 +1003,39 @@ async function handlerRegistroEscola(data, socket) {
                 await connection.query(QueryDelete, ValorDelete);
 
             } else {
-                contador += 1
 
-                socket.emit(`Contador${Identification}`, {
-                    Code: Criptografar('65435436554'),
-                    contador: Criptografar(contador)
+                Salvar.map(async (item) => {
+                    if (teste.find((e) => e.Codigo === item.Codigo) !== undefined) {
+
+                        contador += 1
+
+                        socket.emit(`Contador${Identification}`, {
+                            Code: Criptografar('65435436554'),
+                            contador: Criptografar(contador)
+                        })
+
+
+                        console.log(`Aluno ${teste[i].Aluno} inserido com Sucesso totalizando ${contador}`)
+                        const QueryInsert = "INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha, Imagem) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
+                        const ValorInsert = [teste[i].Codigo, item.Senha, teste[i].Autorization, teste[i].Aluno, teste[i].Escola, teste[i].Modalidade, teste[i].Data, teste[i].Turma, teste[i].AnoSerie, teste[i].Turno, teste[i].Sexo, teste[i].Ano, teste[i].Atrasos, teste[i].Entradas, item.Carteirinha, item.Imagem]
+                        await connection.query(QueryInsert, ValorInsert);
+
+                    } else {
+                        contador += 1
+
+                        socket.emit(`Contador${Identification}`, {
+                            Code: Criptografar('65435436554'),
+                            contador: Criptografar(contador)
+                        })
+
+
+
+                        console.log(`Aluno ${teste[i].Aluno} inserido com Sucesso totalizando ${contador}`)
+                        const QueryInsert = "INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
+                        const ValorInsert = [teste[i].Codigo, teste[i].Senha, teste[i].Autorization, teste[i].Aluno, teste[i].Escola, teste[i].Modalidade, teste[i].Data, teste[i].Turma, teste[i].AnoSerie, teste[i].Turno, teste[i].Sexo, teste[i].Ano, teste[i].Atrasos, teste[i].Entradas, '2024-01-01']
+                        await connection.query(QueryInsert, ValorInsert);
+                    }
                 })
-
-                console.log(`Aluno ${teste[i].Aluno} inserido com Sucesso totalizando ${contador}`)
-                const QueryInsert = "INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
-                const ValorInsert = [teste[i].Codigo, teste[i].Senha, teste[i].Autorization, teste[i].Aluno, teste[i].Escola, teste[i].Modalidade, teste[i].Data, teste[i].Turma, teste[i].AnoSerie, teste[i].Turno, teste[i].Sexo, teste[i].Ano, teste[i].Atrasos, teste[i].Entradas, '2024-01-01']
-                await connection.query(QueryInsert, ValorInsert);
-
             }
         }
         socket.emit(`Finalizar${Identification}`, {
