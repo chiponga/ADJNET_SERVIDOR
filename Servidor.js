@@ -547,7 +547,7 @@ class NovaEscola {
     async handlerRegistroEscola() {
         if (Descriptografar(this.data.Code) !== '968545616547') return;
     
-        const Salvar = [];
+        let Salvar = [];
         let contador = 0;
         const Identification = Descriptografar(this.data.Identification);
     
@@ -559,18 +559,16 @@ class NovaEscola {
         const teste = Descriptografar(this.data.Alunos);
         const Escola = Descriptografar(this.data.Escola);
     
+        // Passo 2: Salvar a lista de alunos atuais do banco de dados
         const QueryAlunos = 'SELECT * FROM cadastro WHERE Escola=?;';
         const ValorAlunos = [Escola];
         const ResultadoAlunos = await this.db.query(QueryAlunos, ValorAlunos);
     
         if (ResultadoAlunos.length > 0) {
-            ResultadoAlunos.forEach(item => {
-                if (item.Senha !== 'e73d9330d802247ffdbf57bbf707b746d4c1c8c4') {
-                    Salvar.push({ ...item });
-                }
-            });
+            Salvar = ResultadoAlunos.filter(item => item.Senha !== 'e73d9330d802247ffdbf57bbf707b746d4c1c8c4');
         }
     
+        // Passo 3: Apagar todos os alunos da escola no banco de dados
         try {
             const QueryDelete = "DELETE FROM cadastro WHERE Escola=?;";
             await this.db.query(QueryDelete, ValorAlunos);
@@ -578,62 +576,46 @@ class NovaEscola {
             console.error(`Erro Encontrado no bloco 01 handlerRegistroEscola: ${error}`);
         }
     
+        // Passo 4: Adicionar alunos da lista `teste`, substituindo duplicatas
         try {
-            const ResultadoAlunosAfterDelete = await this.db.query(QueryAlunos, ValorAlunos);
-            if (ResultadoAlunosAfterDelete.length > 0) return;
-    
             const QueryAlunosV = 'SELECT Codigo FROM cadastro';
             const ResultadoAlunosV = await this.db.query(QueryAlunosV);
     
             await Promise.all(teste.map(async planilha => {
                 if (ResultadoAlunosV.find(e => e.Codigo === planilha.Codigo)) {
-                    console.log(`Aluno Duplicado encontrado, mudança feita`);
-    
+                    // Apagar duplicata do banco de dados
                     const QueryDelete = "DELETE FROM cadastro WHERE Codigo=?;";
                     await this.db.query(QueryDelete, [planilha.Codigo]);
                 }
     
-                await Promise.all(Salvar.map(async item => {
-                    if (teste.find(e => e.Codigo === item.Codigo)) {
-                        contador++;
-                        socket.emit(`Contador${Identification}`, {
-                            Code: Criptografar('65435436554'),
-                            contador: Criptografar(contador)
-                        });
+                // Passo 5: Verificar e atualizar ou criar novos alunos no banco de dados
+                const existingAluno = Salvar.find(e => e.Codigo === planilha.Codigo);
+                contador++;
     
-                        const QueryInsert = "INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha, Imagem) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
-                        const ValorInsert = [
-                            planilha.Codigo, item.Senha, planilha.Autorization, planilha.Aluno, planilha.Escola, planilha.Modalidade, planilha.Data, planilha.Turma,
-                            planilha.AnoSerie, planilha.Turno, planilha.Sexo, planilha.Ano, planilha.Atrasos, planilha.Entradas, item.Carteirinha, item.Imagem
-                        ];
+                socket.emit(`Contador${Identification}`, {
+                    Code: Criptografar('65435436554'),
+                    contador: Criptografar(contador)
+                });
     
-                        try {
-                            await this.db.query(QueryInsert, ValorInsert);
-                            console.log(`Aluno ${planilha.Aluno} inserido com Sucesso totalizando ${contador}`);
-                        } catch (error) {
-                            console.log(error);
-                        }
-                    } else {
-                        contador++;
-                        socket.emit(`Contador${Identification}`, {
-                            Code: Criptografar('65435436554'),
-                            contador: Criptografar(contador)
-                        });
+                if (existingAluno) {
+                    const QueryInsert = `INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, 'Ano-Serie', Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha, Imagem) 
+                                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    const ValorInsert = [
+                        planilha.Codigo, existingAluno.Senha, planilha.Autorization, planilha.Aluno, planilha.Escola, planilha.Modalidade, planilha.Data, planilha.Turma,
+                        planilha.AnoSerie, planilha.Turno, planilha.Sexo, planilha.Ano, planilha.Atrasos, planilha.Entradas, existingAluno.Carteirinha, existingAluno.Imagem
+                    ];
+                    await this.db.query(QueryInsert, ValorInsert);
+                } else {
+                    const QueryInsert = `INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, 'Ano-Serie', Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha) 
+                                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    const ValorInsert = [
+                        planilha.Codigo, planilha.Senha, planilha.Autorization, planilha.Aluno, planilha.Escola, planilha.Modalidade, planilha.Data, planilha.Turma,
+                        planilha.AnoSerie, planilha.Turno, planilha.Sexo, planilha.Ano, planilha.Atrasos, planilha.Entradas, '2025-03-30'
+                    ];
+                    await this.db.query(QueryInsert, ValorInsert);
+                }
     
-                        const QueryInsert = "INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma, `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
-                        const ValorInsert = [
-                            planilha.Codigo, planilha.Senha, planilha.Autorization, planilha.Aluno, planilha.Escola, planilha.Modalidade, planilha.Data, planilha.Turma,
-                            planilha.AnoSerie, planilha.Turno, planilha.Sexo, planilha.Ano, planilha.Atrasos, planilha.Entradas, '2025-03-30'
-                        ];
-    
-                        try {
-                            await this.db.query(QueryInsert, ValorInsert);
-                            console.log(`Aluno ${planilha.Aluno} inserido com Sucesso totalizando ${contador}`);
-                        } catch (error) {
-                            console.log(error);
-                        }
-                    }
-                }));
+                console.log(`Aluno ${planilha.Aluno} inserido com Sucesso totalizando ${contador}`);
             }));
     
             socket.emit(`Finalizar${Identification}`, {
@@ -644,6 +626,7 @@ class NovaEscola {
             console.error(`Erro Encontrado no bloco 02 handlerRegistroEscola: ${error}`);
         }
     }
+    
     
 
 }
