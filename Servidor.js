@@ -334,9 +334,9 @@ class NovaEscola {
             const valores = [Codigo, Token]
             const resultados = await this.db.query(query, valores)
 
-            if (resultados.length > 0) {
+            if (resultados.length === 0) {
 
-                if (this.data.Token !== undefined && this.data.Token !== '') {
+                if (Token !== undefined && Codigo !== '') {
 
                     const query = 'INSERT INTO token (Codigo, Token) VALUES(?,?)'
                     const valores = [Codigo, Token]
@@ -1046,7 +1046,3 @@ async function EnviarNotificaSaida(expoPushToken, aluno, Horas) {
         body: JSON.stringify(message),
     });
 }
-
-
-
-
