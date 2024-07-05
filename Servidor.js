@@ -336,6 +336,8 @@ class NovaEscola {
         const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
         const Token = JSON.parse(Descriptografar(this.data.Token))
 
+        console.log(`Token: ${Token}, Codigo: ${Codigo}`)
+
         if (Code !== '5475656746565821653791789321789') return
 
         try {
