@@ -340,6 +340,8 @@ class NovaEscola {
 
         if (Code !== '5475656746565821653791789321789') return
 
+        console.log(`Token: ${Token}, Codigo: ${Codigo}`)
+
         try {
             const query = 'SELECT * FROM token where Codigo=? AND Token=?;'
             const valores = [Codigo, Token]
