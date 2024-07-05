@@ -193,7 +193,7 @@ class NovaEscola {
 
                let Letra = Descriptografar(this.data.Codigo).charAt(0)
                
-            if (Letra === LetraAno) {
+            if (Letra === LetraAno.Letra) {
                 const ValorAluno = [Descriptografar(this.data.Codigo).substring(1), Descriptografar(this.data.Escola)];
                 const QueryAluno = 'SELECT * FROM cadastro where Codigo=? AND Escola=?;';
                 const ResultadoAluno = await this.db.query(QueryAluno, ValorAluno);
