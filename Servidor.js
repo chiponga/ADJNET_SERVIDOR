@@ -188,7 +188,7 @@ class NovaEscola {
 
 
                 const [LetraAno] = await this.db.query('SELECT Letra FROM difereano WHERE Ano=?',[await Ano()])
-
+                let ResultadoAluno = [];
 
 
                let Letra = Descriptografar(this.data.Codigo).charAt(0)
@@ -196,7 +196,7 @@ class NovaEscola {
             if (Letra === LetraAno.Letra) {
                 const ValorAluno = [Descriptografar(this.data.Codigo).substring(1), Descriptografar(this.data.Escola)];
                 const QueryAluno = 'SELECT * FROM cadastro where Codigo=? AND Escola=?;';
-                const ResultadoAluno = await this.db.query(QueryAluno, ValorAluno);
+                ResultadoAluno = await this.db.query(QueryAluno, ValorAluno);
 
                 if (ResultadoAluno.length === 0) {
                     // Audio Aluno não encontrado
