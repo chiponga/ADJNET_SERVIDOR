@@ -12,12 +12,7 @@ const bodyParserErrorHandler = require('express-body-parser-error-handler')
 var CryptoJS = require("crypto-js");
 var base64 = require('base-64');
 const fetch = require("node-fetch");
-
-const fs = require('fs');
-const path = require('path');
-const sharp = require('sharp');
-
-const knex = require("knex")
+const {Ano} = require('./Data')
 
 let today = new Date()
 
@@ -192,17 +187,31 @@ class NovaEscola {
             if (Descriptografar(this.data.Code) !== '9856334874') return
 
 
-            const ValorAluno = [Descriptografar(this.data.Codigo).substring(1), Descriptografar(this.data.Escola)];
-            const QueryAluno = 'SELECT * FROM cadastro where Codigo=? AND Escola=?;';
-            const ResultadoAluno = await this.db.query(QueryAluno, ValorAluno);
+                const [LetraAno] = await this.db.query('SELECT Letra FROM difereano WHERE Ano=?',[await Ano()])
 
-            if (ResultadoAluno.length === 0) {
-                // Audio Aluno não encontrado
+
+
+               let Letra = Descriptografar(this.data.Codigo).charAt(0)
+               
+            if (Letra === LetraAno) {
+                const ValorAluno = [Descriptografar(this.data.Codigo).substring(1), Descriptografar(this.data.Escola)];
+                const QueryAluno = 'SELECT * FROM cadastro where Codigo=? AND Escola=?;';
+                const ResultadoAluno = await this.db.query(QueryAluno, ValorAluno);
+
+                if (ResultadoAluno.length === 0) {
+                    // Audio Aluno não encontrado
+                    console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${Descriptografar(this.data.Codigo).substring(1)}] - [${Descriptografar(this.data.Escola)}] -  Aluno não encontrado`)
+                    this.socket.emit(`AlunoNaoEncontrado`, { // entrega a requisição para o cliente
+                        Code: Criptografar('9856321450'),
+                    })
+                    return
+                }
+            }else{
                 console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${Descriptografar(this.data.Codigo).substring(1)}] - [${Descriptografar(this.data.Escola)}] -  Aluno não encontrado`)
                 this.socket.emit(`AlunoNaoEncontrado`, { // entrega a requisição para o cliente
                     Code: Criptografar('9856321450'),
                 })
-                return
+                return 
             }
 
             const QueryToken = 'SELECT Token FROM token where Codigo=?;';
@@ -546,28 +555,28 @@ class NovaEscola {
 
     async handlerRegistroEscola() {
         if (Descriptografar(this.data.Code) !== '968545616547') return;
-    
+
         let Salvar = [];
         let contador = 0;
         const Identification = Descriptografar(this.data.Identification);
-    
+
         socket.emit(`CriarDados${Identification}`, {
             Code: Criptografar('9956546546521'),
             Status: Criptografar('202')
         });
-    
+
         const teste = Descriptografar(this.data.Alunos);
         const Escola = Descriptografar(this.data.Escola);
-    
+
         // Passo 2: Salvar a lista de alunos atuais do banco de dados
         const QueryAlunos = 'SELECT * FROM cadastro WHERE Escola=?;';
         const ValorAlunos = [Escola];
         const ResultadoAlunos = await this.db.query(QueryAlunos, ValorAlunos);
-    
+
         if (ResultadoAlunos.length > 0) {
             Salvar = ResultadoAlunos.filter(item => item.Senha !== 'e73d9330d802247ffdbf57bbf707b746d4c1c8c4');
         }
-    
+
         // Passo 3: Apagar todos os alunos da escola no banco de dados
         try {
             const QueryDelete = "DELETE FROM cadastro WHERE Escola=?;";
@@ -575,28 +584,28 @@ class NovaEscola {
         } catch (error) {
             console.error(`Erro Encontrado no bloco 01 handlerRegistroEscola: ${error}`);
         }
-    
+
         // Passo 4: Adicionar alunos da lista `teste`, substituindo duplicatas
         try {
             const QueryAlunosV = 'SELECT Codigo FROM cadastro';
             const ResultadoAlunosV = await this.db.query(QueryAlunosV);
-    
+
             await Promise.all(teste.map(async planilha => {
                 if (ResultadoAlunosV.find(e => e.Codigo === planilha.Codigo)) {
                     // Apagar duplicata do banco de dados
                     const QueryDelete = "DELETE FROM cadastro WHERE Codigo=?;";
                     await this.db.query(QueryDelete, [planilha.Codigo]);
                 }
-    
+
                 // Passo 5: Verificar e atualizar ou criar novos alunos no banco de dados
                 const existingAluno = Salvar.find(e => e.Codigo === planilha.Codigo);
                 contador++;
-    
+
                 socket.emit(`Contador${Identification}`, {
                     Code: Criptografar('65435436554'),
                     contador: Criptografar(contador)
                 });
-    
+
                 if (existingAluno) {
                     const QueryInsert = 'INSERT INTO cadastro (Codigo, Senha, Autorization, Aluno, Escola, Modalidade, Data, Turma,  `Ano-Serie`, Turno, Sexo, Ano, Atrasos, Entradas, Carteirinha, Imagem) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
                     const ValorInsert = [
@@ -612,10 +621,10 @@ class NovaEscola {
                     ];
                     await this.db.query(QueryInsert, ValorInsert);
                 }
-    
+
                 console.log(`Aluno ${planilha.Aluno} inserido com Sucesso totalizando ${contador}`);
             }));
-    
+
             socket.emit(`Finalizar${Identification}`, {
                 Code: Criptografar('984854153165'),
                 Status: Criptografar('201')
@@ -624,8 +633,8 @@ class NovaEscola {
             console.error(`Erro Encontrado no bloco 02 handlerRegistroEscola: ${error}`);
         }
     }
-    
-    
+
+
 
 }
 
