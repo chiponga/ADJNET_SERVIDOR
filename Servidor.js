@@ -139,9 +139,6 @@ const Cliente_Site = {
 }
 
 
-
-
-
 class NovaEscola {
     constructor(data, Socket) {
         this.data = data
@@ -236,7 +233,7 @@ class NovaEscola {
 
                 if (ResultadoInserir) {
                     console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${ResultadoAluno[0].Aluno}] - [${ResultadoAluno[0].Escola}] - Acabou de entrar na escola`)
-
+                    
                     const UpdateQuery = 'UPDATE cadastro SET Entradas=? where Codigo=?;'
                     const ValorUpdate = ["1", Descriptografar(this.data.Codigo).substring(1)]
                     await this.db.query(UpdateQuery, ValorUpdate)
@@ -336,11 +333,10 @@ class NovaEscola {
         const Codigo = JSON.parse(Descriptografar(this.data.Codigo))
         const Token = JSON.parse(Descriptografar(this.data.Token))
 
-        console.log(`Token: ${Token}, Codigo: ${Codigo}`)
 
         if (Code !== '5475656746565821653791789321789') return
 
-        console.log(`Token: ${Token}, Codigo: ${Codigo}`)
+
 
         try {
             const query = 'SELECT * FROM token where Codigo=? AND Token=?;'
