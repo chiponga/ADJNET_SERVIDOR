@@ -503,7 +503,7 @@ class NovaEscola {
             const ValorRegistro = [Codigo, Senha];
             const ResultadoRegistro = await this.db.query(QueryRegistro, ValorRegistro);
 
-            if (ResultadoRegistro.length > 0) {
+            if (ResultadoRegistro.length > 0) { 
                 this.socket.emit('ResponseRegistrarAluno', {
                     Code: Criptografar(JSON.stringify('655644331453261456654')),
                     result: Criptografar(JSON.stringify(ResultadoRegistro))
