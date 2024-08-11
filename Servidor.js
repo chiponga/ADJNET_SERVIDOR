@@ -76,13 +76,13 @@ class Database {
     constructor() {
         if (!Database.instance) {
             this.pool = mysql.createPool({
-                //host: 'mysql-mn8h.railway.internal',
-                host: 'roundhouse.proxy.rlwy.net',
+                host: 'mysql-mn8h.railway.internal',
+                //host: 'roundhouse.proxy.rlwy.net',
                 user: 'root',
                 password: 'zOSDfyNbJkAwWKtPQWkBaqXtvcIawmiJ',
                 database: 'railway',
-                //port: 3306,
-                port: 15386,
+                port: 3306,
+                //port: 15386,
                 waitForConnections: true,
                 connectionLimit: 50,
                 queueLimit: 0
