@@ -76,7 +76,7 @@ class Database {
     constructor() {
         if (!Database.instance) {
             this.pool = mysql.createPool({
-                host: 'mysql-mn8h.railway.internal',
+                host: '85788463.railway.internal',
                 //host: 'roundhouse.proxy.rlwy.net',
                 user: 'root',
                 password: 'zOSDfyNbJkAwWKtPQWkBaqXtvcIawmiJ',
