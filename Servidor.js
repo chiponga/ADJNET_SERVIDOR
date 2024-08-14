@@ -181,30 +181,34 @@ class NovaEscola {
 
         try {
 
-            if (Descriptografar(this.data.Code) !== '9856334874') return
+            const Code = Descriptografar(this.data.Code);
+            const Codigo = Descriptografar(this.data.Codigo);
+            const Escola = Descriptografar(this.data.Escola);
+
+            if (Code !== '9856334874') return
 
 
                 const [LetraAno] = await this.db.query('SELECT Letra FROM difereano WHERE Ano=?',[await Ano()])
                 let ResultadoAluno = [];
 
 
-               let Letra = Descriptografar(this.data.Codigo).charAt(0)
+               let Letra = Codigo.charAt(0)
                
-            if (Letra === LetraAno.Letra) {
-                const ValorAluno = [Descriptografar(this.data.Codigo).substring(1), Descriptografar(this.data.Escola)];
+            if (Letra === LetraAno.Letra || Escola === 'CEF04_SOBR') {
+                const ValorAluno = [Codigo.substring(1), Escola];
                 const QueryAluno = 'SELECT * FROM cadastro where Codigo=? AND Escola=?;';
                 ResultadoAluno = await this.db.query(QueryAluno, ValorAluno);
 
                 if (ResultadoAluno.length === 0) {
                     // Audio Aluno não encontrado
-                    console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${Descriptografar(this.data.Codigo).substring(1)}] - [${Descriptografar(this.data.Escola)}] -  Aluno não encontrado`)
+                    console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${Codigo.substring(1)}] - [${Escola}] -  Aluno não encontrado`)
                     this.socket.emit(`AlunoNaoEncontrado`, { // entrega a requisição para o cliente
                         Code: Criptografar('9856321450'),
                     })
                     return
                 }
             }else{
-                console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${Descriptografar(this.data.Codigo).substring(1)}] - [${Descriptografar(this.data.Escola)}] -  Aluno não encontrado`)
+                console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${Codigo.substring(1)}] - [${Escola}] -  Aluno não encontrado`)
                 this.socket.emit(`AlunoNaoEncontrado`, { // entrega a requisição para o cliente
                     Code: Criptografar('9856321450'),
                 })
@@ -212,7 +216,7 @@ class NovaEscola {
             }
 
             const QueryToken = 'SELECT Token FROM token where Codigo=?;';
-            const ResultadoToken = await this.db.query(QueryToken, Descriptografar(this.data.Codigo).substring(1));
+            const ResultadoToken = await this.db.query(QueryToken, Codigo.substring(1));
 
             if (ResultadoToken.length > 0) {
                 for (let i = 0; i < ResultadoToken.length; i++) {
@@ -235,7 +239,7 @@ class NovaEscola {
                     console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${ResultadoAluno[0].Aluno}] - [${ResultadoAluno[0].Escola}] - Acabou de entrar na escola`)
                     
                     const UpdateQuery = 'UPDATE cadastro SET Entradas=? where Codigo=?;'
-                    const ValorUpdate = ["1", Descriptografar(this.data.Codigo).substring(1)]
+                    const ValorUpdate = ["1", Codigo.substring(1)]
                     await this.db.query(UpdateQuery, ValorUpdate)
                 }
 
