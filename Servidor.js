@@ -1026,7 +1026,7 @@ const EnviarNotifica = (async (Titulo, Mensagem, Login, Database) => {
 
         RESULTADO_001.forEach(async (item) => {
             const message = {
-                to: item.TOKEN,
+                to: item.Token,
                 sound: 'default',
                 title: Titulo,
                 body: Mensagem,
