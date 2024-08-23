@@ -12,7 +12,7 @@ const bodyParserErrorHandler = require('express-body-parser-error-handler')
 var CryptoJS = require("crypto-js");
 var base64 = require('base-64');
 const fetch = require("node-fetch");
-const {Ano} = require('./Data')
+const { Ano } = require('./Data')
 
 let today = new Date()
 
@@ -188,12 +188,12 @@ class NovaEscola {
             if (Code !== '9856334874') return
 
 
-                const [LetraAno] = await this.db.query('SELECT Letra FROM difereano WHERE Ano=?',[await Ano()])
-                let ResultadoAluno = [];
+            const [LetraAno] = await this.db.query('SELECT Letra FROM difereano WHERE Ano=?', [await Ano()])
+            let ResultadoAluno = [];
 
 
-               let Letra = Codigo.charAt(0)
-               
+            let Letra = Codigo.charAt(0)
+
             if (Letra === LetraAno.Letra || Escola === 'CEF04_SOBR') {
                 const ValorAluno = [Codigo.substring(1), Escola];
                 const QueryAluno = 'SELECT * FROM cadastro where Codigo=? AND Escola=?;';
@@ -207,12 +207,12 @@ class NovaEscola {
                     })
                     return
                 }
-            }else{
+            } else {
                 console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${Codigo.substring(1)}] - [${Escola}] -  Aluno não encontrado`)
                 this.socket.emit(`AlunoNaoEncontrado`, { // entrega a requisição para o cliente
                     Code: Criptografar('9856321450'),
                 })
-                return 
+                return
             }
 
             const QueryToken = 'SELECT Token FROM token where Codigo=?;';
@@ -220,7 +220,8 @@ class NovaEscola {
 
             if (ResultadoToken.length > 0) {
                 for (let i = 0; i < ResultadoToken.length; i++) {
-                    EnviarNotificaEntrada(ResultadoToken[i]["Token"], ResultadoAluno[0].Aluno, Descriptografar(this.data.Horas))
+
+                    EnviarNotifica('Entrada', "O Aluno " + ResultadoAluno[0].Aluno + " entrou na escola as " + Descriptografar(this.data.Horas) + "", ResultadoAluno[0].Codigo, this.db)
                 }
             }
 
@@ -237,7 +238,7 @@ class NovaEscola {
 
                 if (ResultadoInserir) {
                     console.log(`[${Descriptografar(this.data.Data)} - ${Descriptografar(this.data.Horas)}] - [${ResultadoAluno[0].Aluno}] - [${ResultadoAluno[0].Escola}] - Acabou de entrar na escola`)
-                    
+
                     const UpdateQuery = 'UPDATE cadastro SET Entradas=? where Codigo=?;'
                     const ValorUpdate = ["1", Codigo.substring(1)]
                     await this.db.query(UpdateQuery, ValorUpdate)
@@ -284,7 +285,8 @@ class NovaEscola {
 
             if (ResultadoToken.length > 0) {
                 for (let i = 0; i < ResultadoToken.length; i++) {
-                    EnviarNotificaEntrada(ResultadoToken[i]["Token"], ResultadoAluno[0].Aluno, Descriptografar(this.data.Horas))
+
+                    EnviarNotifica('Entrada', "O Aluno " + ResultadoAluno[0].Aluno + " entrou na escola as " + Descriptografar(this.data.Horas) + "", ResultadoAluno[0].Codigo, this.db)
                 }
             }
 
@@ -507,7 +509,7 @@ class NovaEscola {
             const ValorRegistro = [Codigo, Senha];
             const ResultadoRegistro = await this.db.query(QueryRegistro, ValorRegistro);
 
-            if (ResultadoRegistro.length > 0) { 
+            if (ResultadoRegistro.length > 0) {
                 this.socket.emit('ResponseRegistrarAluno', {
                     Code: Criptografar(JSON.stringify('655644331453261456654')),
                     result: Criptografar(JSON.stringify(ResultadoRegistro))
@@ -1018,7 +1020,40 @@ async function handlerValidar(data, Socket) {
     }
 }
 
+const EnviarNotifica = (async (Titulo, Mensagem, Login, Database) => {
+    try {
+        const RESULTADO_001 = await Database.query('SELECT Token FROM token WHERE Codigo=?', [Login]);
 
+        RESULTADO_001.forEach(async (item) => {
+            const message = {
+                to: item.TOKEN,
+                sound: 'default',
+                title: Titulo,
+                body: Mensagem,
+            };
+
+            const response = await fetch('https://exp.host/--/api/v2/push/send', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Accept-encoding': 'gzip, deflate',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(message),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(`Erro ao enviar notificação: ${response.status} - ${data}`);
+            }
+
+            console.log('Notificação enviada com sucesso:', data);
+        });
+    } catch (error) {
+        console.error('Erro ao enviar notificação:', error);
+    }
+})
 
 async function EnviarNotificaEntrada(expoPushToken, aluno, Horas) {
     const message = {
