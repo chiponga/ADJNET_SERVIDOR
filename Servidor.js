@@ -286,7 +286,7 @@ class NovaEscola {
             if (ResultadoToken.length > 0) {
                 for (let i = 0; i < ResultadoToken.length; i++) {
 
-                    EnviarNotifica('Entrada', "O Aluno " + ResultadoAluno[0].Aluno + " entrou na escola as " + Descriptografar(this.data.Horas) + "", ResultadoAluno[0].Codigo, this.db)
+                    EnviarNotifica('Saida', "O Aluno " + ResultadoAluno[0].Aluno + " saiu da escola as " + Descriptografar(this.data.Horas) + "", ResultadoAluno[0].Codigo, this.db)
                 }
             }
 
